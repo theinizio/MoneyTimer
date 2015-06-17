@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">MoneyTimer</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="action_statistics">Statistics</string>
+    <string name="action_about">About App</string>
+    <string name="work_text">Work</string>
+    <string name="Rest_text">Rest</string>
+    <string name="settings">Settings</string>
+    <string name="currency_text">Currency</string>
+    <string name="currency_sign_text">Currency sign</string>
+    <string name="hourly_rate_text">Hourly Rate</string>
+    <string name="sign_before_text">Sign before value</string>
+    <string name="work_hours">Work hours</string>
+    <string name="earned_today_text">Earned today</string>
+    <string name="earned_month_text">Earned this month</string>
+    <string name="not_earned_today_text">NOT Earned today</string>
+    <string name="not_earned_month_text">NOT Earned this month</string>
+    <string name="about_text">Money Timer shows you how much money you have earned during the time interval.\nIn the settings, set your working hours and hourly rate. Put a currency sign.\nAfter pressing the button on the main screen app starts to count how much money you earned.\nIf you press the button again, the program will count how much money you have NOT earned during the rest.\n\tMoney Timer motivates you to work and earn money on hourly rate basis jobs.\n\tIn the "Statistics" section you can see how much money you earned per day and per month, as well as not to earn money for the day and month.</string>
+    <string name="credits_text">plusdesignstudia.com\n2015</string>
+    <string name="banner_ad_unit_id">ca-app-pub-8495466813348331/1234276002</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+    <string name="choose_time">Choose time</string>
+    <string name="save">Save</string>
+    <string name="clear_all">clear all settings</string>
+</resources>

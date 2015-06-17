@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/color_background"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:layout_marginRight="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/hourly_rate_text"
+            android:id="@+id/main_tf_houtly_rate"
+            android:layout_gravity="right"
+            android:textSize="@dimen/hour_rate_text_size" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="$6.25"
+            android:id="@+id/main_tf_hourly_rate_value"
+            android:layout_gravity="right"
+            android:layout_marginRight="20dp"
+            android:textSize="@dimen/hour_rate_text_size" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/work_text"
+        android:id="@+id/main_tf_work_text"
+        android:password="false"
+        android:layout_gravity="center_horizontal"
+        android:textSize="@dimen/words_text_size"
+        android:textColor="@color/color_text_white" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="$0.0"
+        android:id="@+id/main_tf_work_money"
+        android:layout_gravity="center_horizontal"
+        android:textSize="@dimen/money_text_size"
+        android:textColor="@color/color_text_white" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0:0:0"
+        android:id="@+id/main_tf_work_timer"
+        android:layout_gravity="center_horizontal"
+        android:textSize="@dimen/timer_text_size"
+        android:layout_marginTop="5dp"
+        android:textColor="@color/color_text_white" />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/mens"
+        android:layout_marginTop="10dp">
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/left_man"
+            android:src="@drawable/icon_rest_blue" />
+
+        <Switch
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/switch1"
+            android:checked="false"
+            android:onClick="switchClick"
+            android:gravity="center_vertical|center_horizontal"
+            android:layout_centerInParent="true"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_gravity="center" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/right_man"
+            android:layout_gravity="center_vertical"
+            android:src="@drawable/icon_work_white" />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/layout4ads"
+        android:layout_gravity="center"
+        android:gravity="center_vertical|center_horizontal"
+        android:layout_marginTop="20dp"></RelativeLayout>
+</LinearLayout>

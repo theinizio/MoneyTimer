@@ -1,0 +1,29 @@
+<resources>
+<string name="app_name">MoneyTimer</string>
+
+<string name="action_settings">Настройки</string>
+<string name="action_statistics">Статистика</string>
+<string name="action_about">О приложении</string>
+<string name="work_text">Работа</string>
+<string name="Rest_text">Отдых</string>
+<string name="settings">Настройки</string>
+<string name="currency_text">Валюта</string>
+<string name="currency_sign_text">Знак валюты</string>
+<string name="hourly_rate_text">Почасовая ставка</string>
+<string name="sign_before_text">Знак валюты перед числом</string>
+<string name="work_hours">Рабочие часы</string>
+<string name="earned_today_text">Заработано сегодня</string>
+<string name="earned_month_text">Заработано за месяц</string>
+<string name="not_earned_today_text">НЕ заработано сегодня</string>
+<string name="not_earned_month_text">НЕ заработано за текущий месяц</string>
+    <string name="clear_all">удалить все настройки</string>
+    <string name="about_text">Приложение, которое показывает вам, сколько денег вы заработали за промежуток времени.\nВ настройках установите ваши рабочие часы и почасовую ставку. Укажите также знак валюты.\nПосле нажатия на кнопку на главном экране программа начинает считать сколько денег вы заработали.\nЕсли вы нажмёте ещё раз на кнопку, то программа будет считать сколько денег вы НЕ заработали, пока отдыхали.</string>
+    <string name="credits_text">plusdesignstudia.com\n2015</string>
+    <string name="appwidget_text">Примерчик</string>
+    <string name="add_widget">Добавить виджет</string>
+    <string name="choose_time">Выберите время</string>
+    <string name="save">Сохранить</string>
+
+
+<string name="banner_ad_unit_id">ca-app-pub-8495466813348331/1234276002</string>
+</resources>
