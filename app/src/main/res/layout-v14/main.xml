@@ -15,7 +15,8 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        android:layout_marginRight="5dp">
+        android:layout_marginRight="5dp"
+        android:onClick="showRateChngerDialog">
 
         <TextView
             android:layout_width="wrap_content"
@@ -23,7 +24,8 @@
             android:text="@string/hourly_rate_text"
             android:id="@+id/main_tf_houtly_rate"
             android:layout_gravity="right"
-            android:textSize="@dimen/hour_rate_text_size" />
+            android:textSize="@dimen/hour_rate_text_size"
+            android:onClick="showRateChngerDialog" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -32,7 +34,8 @@
             android:id="@+id/main_tf_hourly_rate_value"
             android:layout_gravity="right"
             android:layout_marginRight="20dp"
-            android:textSize="@dimen/hour_rate_text_size" />
+            android:textSize="@dimen/hour_rate_text_size"
+            android:onClick="showRateChngerDialog" />
 
     </LinearLayout>
 
@@ -65,45 +68,46 @@
         android:layout_marginTop="5dp"
         android:textColor="@color/color_text_white" />
 
-    <LinearLayout
-        android:orientation="horizontal"
+    <ToggleButton
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="New ToggleButton"
+        android:id="@+id/switch1"
+        android:textAllCaps="false"
+        android:background="@drawable/main_button"
+        android:textOn="@string/stop_text"
+        android:textColor="@color/main_button_text_color"
+        android:textOff="@string/start_text"
+        android:onClick="ToggleButtonClicked"
         android:layout_gravity="center_horizontal"
-        android:id="@+id/mens"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="20dp"
+        android:textSize="30dp" />
 
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/left_man"
-            android:src="@drawable/icon_rest_blue" />
-
-        <Switch
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/switch1"
-            android:checked="false"
-            android:onClick="switchClick"
-            android:gravity="center_vertical|center_horizontal"
-            android:layout_centerInParent="true"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_gravity="center" />
-
-        <ImageView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/right_man"
-            android:layout_gravity="center_vertical"
-            android:src="@drawable/icon_work_white" />
-    </LinearLayout>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/reset_text"
+        android:textAllCaps="false"
+        android:id="@+id/reset_button"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="60dp"
+        android:background="@color/reset_color"
+        android:textColor="@color/main_button_text_color"
+        android:paddingLeft="3dp"
+        android:paddingRight="3dp"
+        android:onClick="resetButtonClicked"
+        android:textSize="24dp"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal" />
 
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
         android:id="@+id/layout4ads"
         android:layout_gravity="center"
-        android:gravity="center_vertical|center_horizontal"
-        android:layout_marginTop="20dp"></RelativeLayout>
+        android:gravity="bottom|center_horizontal"
+        android:layout_marginTop="5dp">
+
+    </RelativeLayout>
 </LinearLayout>

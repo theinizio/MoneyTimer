@@ -23,7 +23,10 @@
     <string name="add_widget">Добавить виджет</string>
     <string name="choose_time">Выберите время</string>
     <string name="save">Сохранить</string>
-
-
+    <string name="start_text">Старт</string>
+    <string name="stop_text">Стоп</string>
+    <string name="reset_text">Сбросить таймер</string>
+    <string name="change_rate">Введите новую ставку</string>
+    <string name="cancel_text">отмена</string>
 <string name="banner_ad_unit_id">ca-app-pub-8495466813348331/1234276002</string>
 </resources>

@@ -4,25 +4,26 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.graphics.Typeface;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.text.InputType;
 import android.text.format.DateFormat;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.CheckBox;
-import android.widget.ImageView;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.Spinner;
-import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.TimePicker;
+import android.widget.ToggleButton;
 
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.AdSize;
@@ -46,9 +47,7 @@ public class MainActivity extends AppCompatActivity {
     public static int RED_COLOR;
     private Typeface tf;
     private int currentContentView=0;
-    private int tp_hour=-1;
-    private int tp_minute=-1;
-    private TextView selected_tv;
+
 
     private Timer timer;
     private long start_timer;
@@ -57,26 +56,29 @@ public class MainActivity extends AppCompatActivity {
 
     private float hourRate;
     private ArrayAdapter<String> aa1;
-    private ArrayAdapter<String> aa2;
     private ArrayList<Currency> currencies;
     private String currentCurrencySign;
     private boolean isSignBefore;
 
-    private float money;
-    private long savedTime;
+
     private long seconds;
     private long minutes;
     private long hours;
-    private String currentCurrency;
     private AdView adView;
     private AdRequest adRequest;
+    private AlertDialog alert;
+    private MoneyAndTime currentSession;
+    private MoneyAndTime todaysSessions;
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.v("onCreate", "Onzzz onCreate");
         setContentView(R.layout.main);
         currentContentView = R.layout.main;
+
+
 
         BLUE_COLOR  = getResources().getColor(R.color.color_text_blue);
         WHITE_COLOR = getResources().getColor(R.color.color_text_white);
@@ -92,11 +94,30 @@ public class MainActivity extends AppCompatActivity {
         if(layout!=null)
             layout.addView(adView);
         adRequest = new AdRequest.Builder().build();
+        currentSession = new MoneyAndTime(0,0);
 
+        Date d = new Date();
+        java.text.DateFormat df = DateFormat.getDateFormat(this);
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME,0);
+        Log.v("createdSession", "\n\ncreatedSession.switch="+settings.getBoolean(df.format(d) + "ToggleButton", false));
+        if(settings.getBoolean(df.format(d) + "ToggleButton", false)){
+             hourRate = settings.getFloat("hour_rate", -1);
+            Log.v("createdSession", "createdSession.hr="+hourRate);
+            if (hourRate != -1) {
+                long time =  (settings.getLong(df.format(d) + "time", 0) + (new Date().getTime() - settings.getLong(df.format(d) + "whenSaved", 0)) / 1000);
+                float money = time * hourRate / 3600;
+                currentSession = new MoneyAndTime(money, time);
+                Log.v("createdSession", "createdSession=\n"+currentSession);
+            }
+        }
 
         timer = new Timer();
         TimerTask updateTime = new UpdateTimeTask();
         timer.schedule(updateTime, 0, 1000);
+
+
+
+
         initMainPage();
 
     }
@@ -118,36 +139,92 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
           //  Log.v("timerTask","timerTask "+savedTime);
             if (currentContentView == R.layout.main) {
-                Switch sw = (Switch) findViewById(R.id.switch1);
+                ToggleButton sw = (ToggleButton) findViewById(R.id.switch1);
                 if (hourRate != -1) {
                     if (sw != null && sw.isChecked()) {
-
-                        long time = new Date().getTime() - start_timer+savedTime;
-
-                        hours   = time / 1000 / 3600;
-                        minutes = (time - hours * 1000 * 3600) / 1000 / 60;
-                        seconds = (time - hours * 1000 * 3600 - minutes * 1000 * 60) / 1000;
-                        Log.v("times", ""+savedTime);//+"|"+(hours*60*60+minutes*60+seconds)*1000);
+                        todaysSessions = ManController.getTodaySessions(getApplicationContext());
+                        currentSession.time++;// =(new Date().getTime() - start_timer)/1000;
+                        long timeForCounter = currentSession.time + todaysSessions.time;
+                        hours   = timeForCounter / 3600;
+                        minutes = (timeForCounter - hours * 3600) / 60;
+                        seconds = (timeForCounter - hours * 3600 - minutes * 60);
                         if (main_tf_work_timer != null)
                             main_tf_work_timer.setText(hours + ":" + minutes + ":" + seconds);
                         if (hourRate != -1) {
-                            money = (float) time * hourRate / 1000 / 3600;
+                            currentSession.money+= hourRate/3600;
+                            float moneyForCounter = currentSession.money + todaysSessions.money;
                             if (main_tf_work_money != null) {
                                 String space = " ";
                                 if (currentCurrencySign.length() == 1) space = "";
-
                                 if (isSignBefore)
-                                    main_tf_work_money.setText(currentCurrencySign + space + String.format("%.2f", money));
+                                    main_tf_work_money.setText(currentCurrencySign + space + String.format("%.2f", moneyForCounter));
                                 else
-                                    main_tf_work_money.setText(String.format("%.2f", money) + space + currentCurrencySign);
+                                    main_tf_work_money.setText(String.format("%.2f", moneyForCounter) + space + currentCurrencySign);
                             }
                         }
-
                     }
                 }
             }
         }
     };
+
+    private  void cerateSessionTimer(){
+        Date d = new Date();
+        java.text.DateFormat df = DateFormat.getDateFormat(this);
+
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME,0);
+
+        if(settings.getBoolean("ToggleButton", false)){
+            if(currentSession==null) {
+                float hourRate = settings.getFloat("hour_rate", -1);
+                if (hourRate != -1) {
+                    long time = (long) (settings.getLong(df.format(d) + "time", 0) + (new Date().getTime() - settings.getLong(df.format(d) + "whenSaved", 0)) / 1000);
+                    float money = time * hourRate / 3600;
+                    currentSession = new MoneyAndTime(money, time);
+                }
+            }
+        }
+    }
+    public void showRateChngerDialog(View v){
+        Log.v("seee0", "ShowDialog");
+        AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+        final EditText input = new EditText(MainActivity.this);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        input.setEms(10);
+        input.setInputType(InputType.TYPE_CLASS_NUMBER |
+                InputType.TYPE_NUMBER_VARIATION_NORMAL |
+                InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        input.setLayoutParams(lp);
+        input.setTypeface(tf);
+        input.setText(""+hourRate);
+        builder.setView(input)
+                .setTitle(getString(R.string.change_rate))
+                .setCancelable(true)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        startNewSession();
+                        hourRate = Float.parseFloat(input.getText().toString());
+                        Log.i("newHR","hewHR="+hourRate);
+                        SharedPreferences s = getSharedPreferences(PREFS_NAME, 0);
+                        SharedPreferences.Editor editor = s.edit();
+                        editor.putFloat("hour_rate", hourRate);
+                        editor.commit();
+                        TextView hr_text= (TextView) findViewById(R.id.main_tf_hourly_rate_value);
+                        hr_text.setText(""+hourRate);
+                    }
+                })
+                .setNegativeButton(R.string.cancel_text, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                });
+        alert = builder.create();
+        alert.show();
+    }
 
 
     private void initMainPage(){
@@ -160,48 +237,48 @@ public class MainActivity extends AppCompatActivity {
                 currentContentView = R.layout.settings;
                 initSettingsPage();
             }
-            currentCurrency = settings.getString("s1_value", "");
+
             currentCurrencySign = settings.getString("s2_value", "");
             isSignBefore = settings.getBoolean("ch_value", false);
 
             Date d = new Date();
             java.text.DateFormat df = DateFormat.getDateFormat(this);
             //Log.v("format", "FORMAT_"+df.format(d));
-
-            money = settings.getFloat(df.format(d) + "money",(float)0);
-
-
-            Switch sw = (Switch) findViewById(R.id.switch1);
+            if(currentSession==null) {
+                currentSession       = new MoneyAndTime(0, 0);
+                currentSession.money = settings.getFloat(df.format(d) + "money", (float) 0);
+                currentSession.time  = settings.getLong(df.format(d) + "time", 0);
+            }
+            ToggleButton sw = (ToggleButton) findViewById(R.id.switch1);
             TextView main_tf_houtly_rate = (TextView) findViewById(R.id.main_tf_houtly_rate);
             TextView main_tf_hourly_rate_value = (TextView) findViewById(R.id.main_tf_hourly_rate_value);
             TextView main_tf_work_text = (TextView) findViewById(R.id.main_tf_work_text);
             main_tf_work_money = (TextView) findViewById(R.id.main_tf_work_money);
             main_tf_work_timer = (TextView) findViewById(R.id.main_tf_work_timer);
-            sw.setChecked(settings.getBoolean("switch",false));
+            Button resetButton = (Button) findViewById(R.id.reset_button);
+            ToggleButton main = (ToggleButton) findViewById(R.id.switch1);
+            resetButton.setTypeface(tf);
+            main.setTypeface(tf);
+            sw.setChecked(settings.getBoolean(df.format(d) + "ToggleButton",false));
+
             main_tf_houtly_rate.setTypeface(tf);
             main_tf_hourly_rate_value.setTypeface(tf);
             main_tf_work_text.setTypeface(tf);
             main_tf_work_money.setTypeface(tf);
             String space = " ";
             if(currentCurrencySign.length()==1) space="";
-
             if(isSignBefore)
-                main_tf_work_money.setText(currentCurrencySign+space+String.format("%.2f",money));
+                main_tf_work_money.setText(currentCurrencySign+space+String.format("%.2f",currentSession.money));
             else
-                main_tf_work_money.setText(String.format("%.2f",money)+space+currentCurrencySign);
+                main_tf_work_money.setText(String.format("%.2f",currentSession.money)+space+currentCurrencySign);
 
             main_tf_work_timer.setTypeface(tf);
-
-            savedTime = settings.getLong(df.format(d)+"time",-1);
-            if(main_tf_work_timer != null)
-            if(savedTime!=-1){
-                hours   = savedTime / 1000 / 3600;
-                minutes = (savedTime - hours * 1000 * 3600) / 1000 / 60;
-                seconds = (savedTime - hours * 1000 * 3600 - minutes / 1000 / 60) / 1000;
-
-                    main_tf_work_timer.setText(hours + ":" + minutes + ":" + seconds);
+            if(main_tf_work_timer != null){
+                hours   = currentSession.time / 3600;
+                minutes = (currentSession.time - hours * 3600) / 60;
+                seconds = (currentSession.time - hours * 3600 - minutes / 60);
+                main_tf_work_timer.setText(hours + ":" + minutes + ":" + seconds);
             }
-
             if(hourRate!=(float)-1.0)
                 main_tf_hourly_rate_value.setText("" + hourRate);
             else{
@@ -209,8 +286,6 @@ public class MainActivity extends AppCompatActivity {
                 currentContentView = R.layout.settings;
                 initSettingsPage();
             }
-            start_timer=new Date().getTime();
-
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -224,11 +299,8 @@ public class MainActivity extends AppCompatActivity {
         try {
             SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
             TextView hour_rate = (TextView) findViewById(R.id.settings_tf_hour_rate_value);
-            Spinner s1 = (Spinner) findViewById(R.id.settings_spinner_currencies);
-
-            Spinner s2 = (Spinner) findViewById(R.id.settings_spinner_signs);
+            AutoCompleteTextView a = (AutoCompleteTextView) findViewById(R.id.autocomplete);
             CheckBox ch = (CheckBox) findViewById(R.id.settings_ch_sign_before);
-
             hour_rate.setText("" + settings.getFloat("hour_rate", 0));
             hour_rate.setOnTouchListener(new View.OnTouchListener() {
                 @Override
@@ -238,41 +310,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-
-            s1.setSelection(aa1.getPosition(settings.getString("s1_value", "")));
-            s2.setSelection(aa2.getPosition(settings.getString("s2_value", "")));
             ch.setChecked(settings.getBoolean("ch_value", true));
-
-            s1.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                    aa2.clear();
-                    aa2.add(currencies.get(position).getSymbol());
-                    if (!currencies.get(position).getSymbol().equals(currencies.get(position).getCurrencyCode()))
-                        aa2.add(currencies.get(position).getCurrencyCode());
-                    aa2.notifyDataSetChanged();
-                    signBeforeClicked(null);
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-                    Log.i("spinner1", "nothing is selected");
-                }
-            });
-
-            s2.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-                @Override
-                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                    signBeforeClicked(null);
-                }
-
-                @Override
-                public void onNothingSelected(AdapterView<?> parent) {
-                    Log.i("spinner1", "nothing is selected");
-                }
-            });
-            signBeforeClicked(null);
+            a.setText(settings.getString("s2_value",""));
+           signBeforeClicked(null);
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -286,8 +326,6 @@ public class MainActivity extends AppCompatActivity {
             currencies = new ArrayList<>();
             aa1 = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
             aa1.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            aa2 = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item);
-            aa2.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
             Set<Currency> currencySet = new HashSet<Currency>();
             Locale[] locs = Locale.getAvailableLocales();
 
@@ -295,9 +333,16 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     Currency tmp_curr=Currency.getInstance( loc );
                     currencySet.add(tmp_curr);
-                    String tmp_str = tmp_curr.getDisplayName(getResources().getConfiguration().locale);
+                    String tmp_str="";
+                    if(Integer.valueOf(Build.VERSION.SDK_INT)>= Build.VERSION_CODES.KITKAT)
+                        tmp_str= tmp_curr.getDisplayName(getResources().getConfiguration().locale);
                     if(aa1.getPosition(tmp_str)==-1) {
                         aa1.add(tmp_str);
+                        aa1.add(tmp_curr.getSymbol());
+                        if(!tmp_curr.getSymbol().equals(tmp_curr.getCurrencyCode()))
+                            aa1.add(tmp_curr.getCurrencyCode());
+                        if(!tmp_curr.getSymbol().equals(tmp_curr.getSymbol(getResources().getConfiguration().locale)))
+                            aa1.add(tmp_curr.getSymbol(getResources().getConfiguration().locale));
                         currencies.add(tmp_curr);
                     }
                 } catch(Exception exc)
@@ -305,44 +350,10 @@ public class MainActivity extends AppCompatActivity {
                    // Log.i("unsupported", "unsupported " + loc.toString());
                 }
             }
-
-            /*
-            Set<Currency> s = Currency.getAvailableCurrencies();
-            for(Currency loc : s) {
-                try {
-                    String tmp = loc.getDisplayName();
-                    if(aa1.getPosition(tmp)==-1) {
-                        aa1.add(tmp);
-                        currencies.add(loc);
-                    }
-                }catch (IllegalArgumentException e){
-                    Log.i("unsupported", "unsupported " + loc.toString());
-                }
-            }
-
-*/
-            Locale myLocale = getResources().getConfiguration().locale;
-            Currency c = Currency.getInstance(myLocale);
-            aa2.add(c.getSymbol());
-            if(!c.getSymbol().equals(c.getCurrencyCode()))
-                aa2.add(c.getCurrencyCode());
-            /*
-            aa1.sort(new Comparator<String>() {
-                @Override
-                public int compare(String lhs, String rhs) {
-                    return lhs.compareTo(rhs);
-                }
-            });*/
-
             aa1.notifyDataSetChanged();
-            aa2.notifyDataSetChanged();
-
-            Spinner cs1= (Spinner) findViewById(R.id.settings_spinner_currencies);
-
-            Spinner cs2= (Spinner) findViewById(R.id.settings_spinner_signs);
-            cs1.setAdapter(aa1);
-
-            cs2.setAdapter(aa2);
+            AutoCompleteTextView a = (AutoCompleteTextView) findViewById(R.id.autocomplete);
+            a.setAdapter(aa1);
+            Log.v("adapter","adapter "+a.getAdapter().getCount());
 
 
         }catch (Exception e){
@@ -355,7 +366,7 @@ public class MainActivity extends AppCompatActivity {
 
         try {
             TextView example = (TextView) findViewById(R.id.settings_tf_hour_rate_example);
-            Spinner spinner = (Spinner) findViewById(R.id.settings_spinner_signs);
+            AutoCompleteTextView a = (AutoCompleteTextView) findViewById(R.id.autocomplete);
             TextView hourRate = (TextView) findViewById(R.id.settings_tf_hour_rate_value);
             String sixteen = "";
             if(hourRate!=null){
@@ -365,11 +376,8 @@ public class MainActivity extends AppCompatActivity {
             String sign="";
             String space = " ";
 
-            if(aa2.getCount()==1) {
-                sign=aa2.getItem(0);
-            }else{
-                sign = (String) spinner.getSelectedItem();
-            }
+            sign = (String) a.getText().toString();
+
             if(sign.length()==1) space="";
             if (sign.length() > 1) sign += " ";
             CheckBox signBefore = (CheckBox) findViewById(R.id.settings_ch_sign_before);
@@ -383,69 +391,74 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void showTimePickerDialog(View v){
-        selected_tv = (TextView) v;
-        AlertDialog.Builder builder2 = new AlertDialog.Builder(this);
-        LinearLayout view = (LinearLayout) getLayoutInflater()
-                .inflate(R.layout.time_picker_layout, null);
-        builder2.setView(view)
-                .setCancelable(true)
-                .setPositiveButton(R.string.save, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        TimePicker tp = (TimePicker) findViewById(R.id.timePicker);
-                        if(tp!=null) {
-                            tp_hour = tp.getCurrentHour();
-                            tp_minute = tp.getCurrentMinute();
-
-                            //TODO TIME FORMAT FROM LOCALE
-                            String am_pm = "";
-                            if (tp_hour > 12) am_pm = "PM";
-                            else am_pm = "AM";
-                            selected_tv.setText("" + tp_hour + ":" + tp_minute);
-                        }
-                    }
-                })
-                .setTitle(getString(R.string.choose_time));
-        AlertDialog alert = builder2.create();
-        alert.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialogInterface) {
-                TimePicker tp = (TimePicker) findViewById(R.id.timePicker);
-                if(tp!=null)
-                    tp.setCurrentHour(Integer.parseInt(selected_tv.getText().toString()));
-            }
-        });
-        alert.show();
-    }
 
 
 
-    public void switchClick(View v){
-        Switch sw= (Switch) v;
+    public void ToggleButtonClicked(View v){
+        ToggleButton sw= (ToggleButton) v;
         if(sw.isChecked()){
+            Date d = new Date();
+            java.text.DateFormat df = DateFormat.getDateFormat(this);
+
             setWorkState(true);
-            Log.v("Switch", "sw is checked");
-            start_timer=new Date().getTime();
+            SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putBoolean(df.format(d) + "ToggleButton",sw.isChecked());
+            editor.commit();
+
+            initMainPage();
+
+
         }else{
             setWorkState(false);
+            startNewSession();
             saveSettings();
-            Log.v("Switch", "sw is UNchecked");
+
         }
     }
 
+    public void resetButtonClicked(View v){
+        start_timer = new Date().getTime();
+        SharedPreferences s = getSharedPreferences(PREFS_NAME,0);
+        SharedPreferences.Editor editor = s.edit();
+        Date d = new Date();
+        java.text.DateFormat df = DateFormat.getDateFormat(this);
+        editor.putLong(df.format(d) + "time", 0);
+        editor.putFloat(df.format(d) + "money", 0);
+        editor.commit();
+        hours=0;
+        minutes=0;
+        seconds=0;
+        ToggleButton main = (ToggleButton) findViewById(R.id.switch1);
+        main.setChecked(false);
+        TextView main_tf_work_money = (TextView) findViewById(R.id.main_tf_work_money);
+        TextView time_text = (TextView) findViewById(R.id.main_tf_work_timer);
+        if(time_text!=null)
+            time_text.setText("0:0:0");
+
+        if (main_tf_work_money != null) {
+            String space = " ";
+            if (currentCurrencySign.length() == 1) space = "";
+
+            if (isSignBefore)
+                main_tf_work_money.setText(currentCurrencySign + space +  "0");
+            else
+                main_tf_work_money.setText( "0" + space + currentCurrencySign);
+        }
+        ManController.clearTodaysSessions(this);
+        todaysSessions = new MoneyAndTime(0,0);
+        currentSession= new MoneyAndTime(0,0);
+    }
 
     private void setWorkState(boolean sw){
         if(sw) {
             setColorForWorkText(WHITE_COLOR);
 
-            setLeftManColor(BLUE_COLOR);
-            setRightManColor(WHITE_COLOR);
+
         }else{
             setColorForWorkText(BLUE_COLOR);
 
-            setLeftManColor(WHITE_COLOR);
-            setRightManColor(BLUE_COLOR);
+
         }
     }
 
@@ -464,29 +477,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private void setLeftManColor(int color){
-        try {
-            ImageView man = (ImageView) findViewById(R.id.left_man);
-            if (color == BLUE_COLOR)
-                man.setImageResource(R.drawable.icon_rest_blue);
-            if (color == WHITE_COLOR)
-                man.setImageResource(R.drawable.icon_rest_white);
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-
-    private void setRightManColor(int color){
-        try {
-            ImageView man = (ImageView) findViewById(R.id.right_man);
-            if (color == BLUE_COLOR)
-                man.setImageResource(R.drawable.icon_work_blue);
-            if (color == WHITE_COLOR)
-                man.setImageResource(R.drawable.icon_work_white);
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -530,12 +520,13 @@ public class MainActivity extends AppCompatActivity {
                 Date d = new Date();
                 java.text.DateFormat df = DateFormat.getDateFormat(this);
                 //Log.v("format", "FORMAT_" + df.format(d));
-                Switch sw = (Switch) findViewById(R.id.switch1);
-                savedTime = (hours*60*60+minutes*60+seconds)*1000;
-                editor.putLong(df.format(d) + "time", savedTime);
-                editor.putBoolean("switch",sw.isChecked());
-                editor.putFloat(df.format(d) + "money", money);
+                ToggleButton sw = (ToggleButton) findViewById(R.id.switch1);
+                editor.putLong(   df.format(d) + "time",currentSession.time);
+                editor.putLong(   df.format(d) + "whenSaved",new Date().getTime());
+                editor.putBoolean(df.format(d) + "ToggleButton",sw.isChecked());
+                editor.putFloat(  df.format(d) + "money", currentSession.money);
                 editor.commit();
+
             }catch (Exception e){
                 e.printStackTrace();
             }
@@ -543,18 +534,17 @@ public class MainActivity extends AppCompatActivity {
         if(currentContentView==R.layout.settings) {
             try {
                 TextView hour_rate = (TextView) findViewById(R.id.settings_tf_hour_rate_value);
-                Spinner s1 = (Spinner) findViewById(R.id.settings_spinner_currencies);
-                Spinner s2 = (Spinner) findViewById(R.id.settings_spinner_signs);
+                AutoCompleteTextView a = (AutoCompleteTextView) findViewById(R.id.autocomplete);
                 CheckBox ch = (CheckBox) findViewById(R.id.settings_ch_sign_before);
-
+                float hr_old = hourRate;
                 hourRate = Float.parseFloat(hour_rate.getText().toString());
-                currentCurrency = (String) s1.getItemAtPosition(s1.getSelectedItemPosition());
-                currentCurrencySign = (String) s2.getItemAtPosition(s2.getSelectedItemPosition());
+                if(hr_old!=hourRate&&currentSession.time>0)
+                    startNewSession();
+                currentCurrencySign = (String) a.getText().toString();
                 isSignBefore = ch.isChecked();
 
                 editor.putFloat("hour_rate", hourRate);
-                editor.putString("s1_value", (String) s1.getSelectedItem());
-                editor.putString("s2_value", (String) s2.getSelectedItem());
+                editor.putString("s2_value", currentCurrencySign);
                 editor.putBoolean("ch_value", isSignBefore);
                 editor.commit();
             }catch (Exception e){
@@ -563,33 +553,99 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void  startNewSession(){
+        Log.v("startNewSession", "oldTime="+currentSession.time);
+        ManController.writeSession(this,hourRate, currentSession.time);
+        currentSession = new MoneyAndTime(0,0);
+    }
+    
+    public void okClicked(View v){
+        saveSettings();
+        setContentView(R.layout.main);
+        initMainPage();
+        currentContentView = R.layout.main;
+    }
 
     public void clearAllSettings(View v){
-        savedTime = 0;
-        money = 0;
-        hourRate = 0;
-        start_timer = new Date().getTime();
+
+        TextView hour_rate = (TextView) findViewById(R.id.settings_tf_hour_rate_value);
+        AutoCompleteTextView a = (AutoCompleteTextView) findViewById(R.id.autocomplete);
+        CheckBox ch = (CheckBox) findViewById(R.id.settings_ch_sign_before);
+
+        hour_rate.setText("");
+        a.setText("");
+        a.requestFocus();
+        ch.setChecked(true);
+
         SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit();
         editor.clear();
         editor.commit();
+
+        ManController.clearStatistic(this);
+        currentSession = new MoneyAndTime(0,0);
+        todaysSessions = new MoneyAndTime(0,0);
     }
 
     @Override
     public void onPause() {
-        Log.v("onPause", "onPause");
+        Log.v("onPause", "Onzzz onPause");
         super.onPause();
         saveSettings();
     }
+
+    @Override
+    public void onResume() {
+        Log.v("onResume", "Onzzz onResume");
+        super.onResume();
+        initMainPage();
+    }
+
+
+    @Override
+    public void onStop() {
+        Log.v("onStop", "Onzzz onStop");
+        super.onStop();
+        saveSettings();
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.v("onDestroy", "Onzzz onDestroy");
+        super.onDestroy();
+        SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
+        SharedPreferences.Editor editor = settings.edit();
+        Date d = new Date();
+        java.text.DateFormat df = DateFormat.getDateFormat(this);
+        ToggleButton sw = (ToggleButton) findViewById(R.id.switch1);
+        editor.putLong(   df.format(d) + "time",currentSession.time);
+        editor.putLong(   df.format(d) + "whenSaved",new Date().getTime());
+        editor.putBoolean(df.format(d) + "ToggleButton",sw.isChecked());
+        editor.putFloat(  df.format(d) + "money", currentSession.money);
+        editor.commit();
+    }
+
+
+    @Override
+    public void onStart() {
+        Log.v("onStart", "Onzzz onStart");
+        super.onStart();
+        cerateSessionTimer();
+
+
+    }
+
 
 
     @Override
     public void onBackPressed(){
         saveSettings();
-        switch(currentContentView){
+        switch (currentContentView){
             case R.layout.main:
             default:
+
                 finish();
+
                 break;
             case R.layout.settings:
             case R.layout.statistics:
@@ -620,6 +676,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
-
-
 }

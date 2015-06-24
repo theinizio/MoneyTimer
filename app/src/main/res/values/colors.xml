@@ -6,4 +6,8 @@
     <color name="color_text_green">#52c655</color>
     <color name="color_text_red">#c45353</color>
     <color name="color_black">#000000</color>
+    <color name="start_color">#FFF13E</color>
+    <color name="stop_color">#FF5A5A</color>
+    <color name="reset_color">#004875</color>
+    <color name="main_button_text_color">#001A2E</color>
 </resources>
